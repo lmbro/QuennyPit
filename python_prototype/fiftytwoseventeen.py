@@ -3,6 +3,7 @@ import time
 
 from tkinter import *
 from tkinter import ttk
+from tkinter.font import Font
 
 
 class FiftyTwoSeventeen( Tk ):
@@ -13,26 +14,43 @@ class FiftyTwoSeventeen( Tk ):
         self.parent = parent
         self.title( "Fifty-Two Seventeen" )
 
-        self.clock = Ticker( self )
-        self.clock.grid( row=0, column=0, columnspan=2 )
+        # Master Frame
+        self.master_frame = Frame( self )
 
-        self.btn_work = Button( self, text='Work', command=self._start_work )
+        # Clock
+        self.clock = Ticker( self.master_frame )
+
+        # Buttons
+        self.btn_work = Button( self.master_frame, text='Work', command=self._start_work )
+        self.btn_rest = Button( self.master_frame, text='Rest', command=self._start_rest )
+
+        # Geometry
+
+        self.master_frame.pack( expand=TRUE, fill=BOTH )
+        
+        self.clock.grid( row=0, column=0, columnspan=2, sticky=N+S+E+W )
         self.btn_work.grid( row=1, column=0, sticky=E+W )
-
-        self.btn_rest = Button( self, text='Rest', command=self._start_rest )
         self.btn_rest.grid( row=1, column=1, sticky=E+W )
+
+        self.master_frame.rowconfigure( 0, weight=1 )
+        self.master_frame.rowconfigure( 1, weight=1 )
+        self.master_frame.columnconfigure( 0, weight=1 )
+        self.master_frame.columnconfigure( 1, weight=1 )
+
 
     def _start_work( self ):
         self.clock.stop()
-        self.clock = Ticker( self )
-        self.clock.grid( row=0, column=0, columnspan=2 )
+        self.clock = Ticker( self.master_frame )
+        self.clock.grid( row=0, column=0, columnspan=2, sticky=N+S+E+W )
         self.clock.start()
+        return
 
     def _start_rest( self ):
         self.clock.stop()
-        self.clock = Tocker( self, self.clock.get_time() // 3 )
-        self.clock.grid( row=0, column=0, columnspan=2 )
+        self.clock = Tocker( self.master_frame, self.clock.get_time() // 3 )
+        self.clock.grid( row=0, column=0, columnspan=2, sticky=N+S+E+W )
         self.clock.start()
+        return
 
 
 class Ticker( Frame ):
@@ -47,8 +65,11 @@ class Ticker( Frame ):
 
         # GUI Elements
         self.time_str = StringVar()
+        self.font = Font( family="Source Code Pro", size=20 )
         self._format_time()
-        Label( self, textvariable=self.time_str ).pack()
+        Label( self, textvariable=self.time_str, font=self.font ).pack()
+
+        self.bind( '<Configure>', self._resize )
 
     def start( self ):
         self._tick()
@@ -68,6 +89,11 @@ class Ticker( Frame ):
 
     def _format_time( self ):
         self.time_str.set( "{:02d}:{:02d}".format(*divmod( self.time, 60)) )
+
+    def _resize( self, event ):
+        height = ( self.winfo_width() ) // -4
+        print( height )
+        self.font.configure( size=height )
 
 
 class Tocker( Frame ):
