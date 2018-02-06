@@ -27,6 +27,7 @@ class Kesha( Frame ):
         self.clock = Ticker( self )
         self.clock_net = Ticker( self, 0, 3 )
         self.clock_net_started = False
+        self.rollover = 0
 
         # Buttons
         self.btn_work = Button( self, text='Work', command=self._start_work )
@@ -63,6 +64,7 @@ class Kesha( Frame ):
 
     def _start_work( self ):
         self.clock.stop()
+        self.rollover = self.clock.get_time()
         self.clock = Ticker( self )
         self.clock.grid( row=0, column=0, columnspan=2, sticky=N+S+E+W )
         self.clock.start()
@@ -73,7 +75,7 @@ class Kesha( Frame ):
 
     def _start_rest( self ):
         self.clock.stop()
-        self.clock = Tocker( self, self.clock.get_time() // 3 )
+        self.clock = Tocker( self, ( self.clock.get_time() // 3 ) + self.rollover )
         self.clock.grid( row=0, column=0, columnspan=2, sticky=N+S+E+W )
         self.clock.start()
         return
