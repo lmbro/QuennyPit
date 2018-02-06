@@ -6,58 +6,87 @@ from tkinter import ttk
 from tkinter.font import Font
 
 
+
 class FiftyTwoSeventeen( Tk ):
 
     def __init__( self, parent ):
         Tk.__init__( self, parent )
 
-        self.parent = parent
         self.title( "Fifty-Two Seventeen" )
 
-        # Master Frame
-        self.master_frame = Frame( self )
+        Kesha( self ).pack( expand=TRUE, fill=BOTH )
 
-        # Clock
-        self.clock = Ticker( self.master_frame )
+class Kesha( Frame ):
+
+    def __init__( self, parent ):
+        Frame.__init__( self, parent )
+
+        self.parent = parent
+
+        # Clocks
+        self.clock = Ticker( self )
+        self.clock_net = Ticker( self, 0, 3 )
+        self.clock_net_started = False
 
         # Buttons
-        self.btn_work = Button( self.master_frame, text='Work', command=self._start_work )
-        self.btn_rest = Button( self.master_frame, text='Rest', command=self._start_rest )
+        self.btn_work = Button( self, text='Work', command=self._start_work )
+        self.btn_rest = Button( self, text='Rest', command=self._start_rest )
+        #self.btn_reset = Button( self, text='RESET', command=self._reset_work_time )
 
-        # Geometry
-
-        self.master_frame.pack( expand=TRUE, fill=BOTH )
         
+        # Geometry
         self.clock.grid( row=0, column=0, columnspan=2, sticky=N+S+E+W )
-        self.btn_work.grid( row=1, column=0, sticky=N+S+E+W )
-        self.btn_rest.grid( row=1, column=1, sticky=N+S+E+W )
+        self.clock_net.grid( row=1, column=0, columnspan=2, sticky=N+S+E+W )
+        
+        self.btn_work.grid( row=2, column=0, sticky=N+S+E+W )
+        self.btn_rest.grid( row=2, column=1, sticky=N+S+E+W )
 
-        self.master_frame.rowconfigure( 0, weight=1 )
-        self.master_frame.rowconfigure( 1, weight=1 )
-        self.master_frame.columnconfigure( 0, weight=1 )
-        self.master_frame.columnconfigure( 1, weight=1 )
+        self.rowconfigure( 0, weight=1 )
+        self.rowconfigure( 1, weight=1 )
+        self.rowconfigure( 2, weight=1 )
+        self.columnconfigure( 0, weight=1 )
+        self.columnconfigure( 1, weight=1 )
 
+    def stop_net( self ):
+        self.clock_net.stop()
+        self.clock_net = Ticker( self, self.clock_net.get_time(), 3 )
+        self.clock_net.grid( row=1, column=0, columnspan=2, sticky=NSEW )
+        self.clock_net_started = False
+        return
+
+    def reset_net( self ):
+        self.clock_net.stop()
+        self.clock_net = Ticker( self, 0, 3 )
+        self.clock_net.grid( row=1, column=0, columnspan=2, sticky=NSEW )
+        self.clock_net_started = False
+        return
 
     def _start_work( self ):
         self.clock.stop()
-        self.clock = Ticker( self.master_frame )
+        self.clock = Ticker( self )
         self.clock.grid( row=0, column=0, columnspan=2, sticky=N+S+E+W )
         self.clock.start()
+        if( not self.clock_net_started ):
+            self.clock_net.start()
+            self.clock_net_started = True
         return
 
     def _start_rest( self ):
         self.clock.stop()
-        self.clock = Tocker( self.master_frame, self.clock.get_time() // 3 )
+        self.clock = Tocker( self, self.clock.get_time() // 3 )
         self.clock.grid( row=0, column=0, columnspan=2, sticky=N+S+E+W )
         self.clock.start()
         return
 
+
 class TickTock( Frame ):
 
-    def __init__( self, parent, time=0 ):
+    def __init__( self, parent, time=0, scaledown=1 ):
         Frame.__init__( self, parent )
 
+        self.parent = parent
         self.time = time
+        self.scaledown = scaledown
         self.run = True
 
         self.time_str = StringVar()
@@ -77,7 +106,7 @@ class TickTock( Frame ):
         return
 
     def _resize( self, event ):
-        height = ( self.winfo_width() ) // -4
+        height = ( self.winfo_width() ) // (-4*self.scaledown)
         print( height )
         self.font.configure( size=height )
         return
@@ -85,8 +114,8 @@ class TickTock( Frame ):
 
 class Ticker( TickTock ):
 
-    def __init__( self, parent, time=0 ):
-        TickTock.__init__( self, parent, time )
+    def __init__( self, parent, time=0, scaledown=1 ):
+        TickTock.__init__( self, parent, time, scaledown )
 
         # Core operation
         self.ticker = threading.Timer( 1, self._tick )
@@ -107,8 +136,8 @@ class Ticker( TickTock ):
 
 class Tocker( TickTock ):
 
-    def __init__( self, parent, time ):
-        TickTock.__init__( self, parent, time )
+    def __init__( self, parent, time=0, scaledown=1 ):
+        TickTock.__init__( self, parent, time, scaledown )
 
         # Core operation
         self.tocker = threading.Timer( 1, self._tock )
@@ -125,6 +154,8 @@ class Tocker( TickTock ):
             self.time -= 1
             self.tocker = threading.Timer( 1, self._tock )
             self.tocker.start()
+        elif( self.time <= 0 ):
+            self.parent.stop_net()
 
 
 if( __name__=='__main__' ):
